@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<title>Телефонный справочник</title>
+
+	<script src="webix/webix.js"></script>
+	<script src="webix/components/sidebar/sidebar.js"></script>
+
+	<link rel="stylesheet" href="webix/webix.css">
+	<link rel="stylesheet" href="webix/components/sidebar/sidebar.css">
+	<style>
+		.menu {
+			padding: 0 5px;
+		}
+		.phones {
+			display: flex;
+			align-items: center;
+		}
+		.phones .name {
+			flex-basis: 85%;
+		}
+		.phones .number {
+			flex-basis: 15%;
+			font-weight: bold;
+		}
+		.info {
+			display: flex;
+			min-height: 40px;
+		}
+		.info .label {
+			padding: 5px 10px;
+			flex-basis: 20%;
+		}
+		.info .value {
+			padding: 5px 10px;
+			font-weight: bold;
+		}
+	</style>
+</head>
+<body>
+	<script>
+	webix.ui({
+		type: 'wide',
+		rows: [
+			{view: 'toolbar', elements: [
+				{view: 'label', label: 'Телефонный справочник управления ООДМС'}
+			]},
+			{type: 'wide',
+			cols: [
+				{view: 'list', id: 'sudlist', width: 280, type: {height: 33}, scroll: true, select: true, template: '#data1#', datatype: 'csv', url: 'суды.csv', ready: function(){
+					this.select(this.getFirstId());
+				}},
+				{id: 'sudinfo', template: '<div class="info"><span class="label">Индекс:</span><span class="value">#data2#</span></div><div class="info"><span class="label">Адрес:</span><span class="value">#data3#</span></div><div class="info"><span class="label">Код города:</span><span class="value">#data4#</span></div><div class="info"><span class="label">Эл.почта:</span><span class="value">#data5#</span></div>', datatype: 'csv', url: 'суды.csv'},
+   				{view: 'unitlist', id: 'phonebook', scroll: true, uniteBy: '#data1#', template: '<span class="phones"><div class="name">#data2#<br><b>#data3#</b></div> <div class="number">#data4#</div></span>', select: false, type: { width: 500, height: 'auto'}, datatype: 'csv', url: 'справочник.csv'},
+			]}
+		]
+	});
+
+	$$('phonebook').bind($$('sudlist'), function(slave, master) {
+		if (!master) return false;
+		return master.data0 == slave.data0;
+	});
+
+	$$('sudinfo').bind($$('sudlist'), function(slave, master){
+		if (!master) return false;
+		return master.data0 == slave.data0;
+	});
+	</script>
+</body>
+</html>
