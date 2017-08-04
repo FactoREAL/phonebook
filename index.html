@@ -3,15 +3,45 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Телефонный справочник</title>
+	<link rel="shortcut icon" href="favicon.ico">
 
 	<script src="webix/webix.js"></script>
-	<script src="webix/components/sidebar/sidebar.js"></script>
 
 	<link rel="stylesheet" href="webix/webix.css">
-	<link rel="stylesheet" href="webix/components/sidebar/sidebar.css">
 	<style>
-		.menu {
-			padding: 0 5px;
+	@media screen {
+		body {
+			margin: 0;
+			background-color: rgb(235, 247, 255);
+		}
+		header {
+			margin:  0 0 10px 0;
+		}
+		main {
+			display: flex;
+			flex-wrap: nowrap;
+			justify-content: space-between;
+			height: 860px;
+		}
+		#mode {
+			background-color: rgb(52, 152, 219);
+			border-radius: 5px;
+			margin: 5px;
+			display: block;
+			position: absolute;
+			top: 0;
+			right: 0;
+		}
+		.webix_img_btn {
+			text-align: center;
+		}
+		.webix_icon_btn.fa-print:before,
+		.webix_icon_btn.fa-eye:before {
+			color: #eee;
+			font-size: 20px
+		}
+		#info, #book {
+			flex-basis: 37%;
 		}
 		.phones {
 			display: flex;
@@ -20,52 +50,190 @@
 		.phones .name {
 			flex-basis: 85%;
 		}
-		.phones .number {
+		#book .number {
 			flex-basis: 15%;
 			font-weight: bold;
+			text-align: center;
 		}
-		.info {
+		#info .sudName {
+			display: none;
+		}
+		#info .info {
 			display: flex;
 			min-height: 40px;
 		}
-		.info .label {
+		#info .label {
 			padding: 5px 10px;
 			flex-basis: 20%;
 		}
-		.info .value {
+		#info .value {
 			padding: 5px 10px;
 			font-weight: bold;
 		}
+		.webix_list_item.custom {
+			line-height: 20px;
+			border-bottom: 1px solid #888;
+			padding-top: 3px;
+			padding-bottom: 3px;
+		}
+
+	}
+
+	@media print {
+		* {
+			color: #222;
+		}
+		body {
+			background-color: white;
+			color: black;
+		}
+		#info .info {
+			height: 35px;
+			font-size: 16px;
+		}
+		#info .value {
+			font-weight: bold;
+			margin: 0 10px;
+		}
+		.phones {
+			display: flex;
+			align-items: center;
+		}
+		.phones .name {
+			flex-basis: 85%;
+		}
+		#info .sudName {
+			text-align: center;
+			font-size: 20px;
+			font-weight: bold;
+			margin: 5px 0;
+		}
+		#book .number {
+			flex-basis: 15%;
+			font-weight: bold;
+			text-align: center;
+		}
+		button, #mode {
+			display: none;
+		}
+		.webix_list .webix_unit_header {
+			background-color: #aaa;
+		}
+		.webix_list_item.custom {
+			line-height: 20px;
+			border-bottom: 1px solid #888;
+			padding-top: 3px;
+			padding-bottom: 3px;
+		}
+	}
 	</style>
 </head>
 <body>
-	<script>
-	webix.ui({
-		type: 'wide',
-		rows: [
-			{view: 'toolbar', elements: [
-				{view: 'label', label: 'Телефонный справочник управления ООДМС'}
-			]},
-			{type: 'wide',
-			cols: [
-				{view: 'list', id: 'sudlist', width: 280, type: {height: 33}, scroll: true, select: true, template: '#data1#', datatype: 'csv', url: 'суды.csv', ready: function(){
-					this.select(this.getFirstId());
-				}},
-				{id: 'sudinfo', template: '<div class="info"><span class="label">Индекс:</span><span class="value">#data2#</span></div><div class="info"><span class="label">Адрес:</span><span class="value">#data3#</span></div><div class="info"><span class="label">Код города:</span><span class="value">#data4#</span></div><div class="info"><span class="label">Эл.почта:</span><span class="value">#data5#</span></div>', datatype: 'csv', url: 'суды.csv'},
-   				{view: 'unitlist', id: 'phonebook', scroll: true, uniteBy: '#data1#', template: '<span class="phones"><div class="name">#data2#<br><b>#data3#</b></div> <div class="number">#data4#</div></span>', select: false, type: { width: 500, height: 'auto'}, datatype: 'csv', url: 'справочник.csv'},
-			]}
-		]
-	});
+	<header id="header"></header>
+	<div id="mode"></div>
+	<main id="main">
+		<div id="list"></div>
+		<div id="info"></div>
+		<div id="book"></div>
+	</main>
+<script>
+webix.ui({
+	view: 'toolbar', container: 'header', elements: [
+		{view: 'label', label: 'Телефонный справочник аппарата мировых судей Белгородской области'},
+		{view: 'label', label: '(01.08.2017)'}
+	]
+});
 
-	$$('phonebook').bind($$('sudlist'), function(slave, master) {
-		if (!master) return false;
-		return master.data0 == slave.data0;
-	});
+webix.ui({
+	container: 'mode',
+	cols: [
+		{view: 'button', type: 'icon', width: 40, icon: 'eye', click: 'viewVersion()'},
+		{view: 'button', type: 'icon', width: 40, icon: 'print', click: 'printVersion()'}, 
+	]
+});
 
-	$$('sudinfo').bind($$('sudlist'), function(slave, master){
-		if (!master) return false;
-		return master.data0 == slave.data0;
-	});
-	</script>
+webix.ui({
+	view: 'list', container: 'list', id: 'sudlist', width: 300, type: {height: 33}, scroll: false, select: true, template: '#data1#', datatype: 'csv', url: 'суды.csv', ready: function(){
+		this.select(this.getFirstId());
+	}
+});
+
+webix.ui({
+	id: 'sudinfo', container: 'info', template: '<div class="sudName">#data1#</div><div class="info"><span class="label">Индекс:</span><span class="value">#data2#</span></div><div class="info"><span class="label">Адрес:</span><span class="value">#data3#</span></div><div class="info"><span class="label">Код города:</span><span class="value">#data4#</span></div><div class="info"><span class="label">Эл.почта:</span><span class="value">#data5#</span></div>', datatype: 'csv', url: 'суды.csv'
+});
+
+webix.ui({
+	view: 'unitlist', container: 'book', id: 'phonebook',  scroll: true, uniteBy: '#data1#', template: '<span class="phones"><div class="name">#data2#<br><b>#data3#</b></div> <div class="number">#data4#</div></span>', select: false, type: {height: 'auto'}, datatype: 'csv', url: 'справочник.csv'
+});
+
+$$('phonebook').bind($$('sudlist'), function(slave, master) {
+	if (!master) return false;
+	return master.data0 == slave.data0;
+});
+
+$$('sudinfo').bind($$('sudlist'), function(slave, master){
+	if (!master) return false;
+	return master.data0 == slave.data0;
+});
+
+function viewVersion() {
+	var header = document.getElementById('header');
+	var main = document.getElementById('main');
+	var list = document.getElementById('list');
+	var info = document.getElementById('info');
+	var book = document.getElementById('book');
+
+	var listItems = book.getElementsByClassName('webix_list_item');
+	for (i=0; i<listItems.length; i++) {
+		listItems[i].classList.remove('custom');
+	}
+
+	header.style = undefined;
+	main.style = undefined;
+	list.style.display = 'block';
+
+	main.style.display = 'flex';
+
+	info.style.width = '37%';
+	info.style.height = '100%';
+
+	book.style.width = '37%';
+	
+	$$('sudinfo').adjust();
+	$$('phonebook').adjust();
+	info.style = undefined;
+	book.style = undefined;
+}
+
+function printVersion() {
+	var header = document.getElementById('header');
+	var main = document.getElementById('main');
+	var list = document.getElementById('list');
+	var info = document.getElementById('info');
+	var book = document.getElementById('book');
+	
+	with (main.style) {
+		display = 'inline-block';
+		height = 'auto';
+		width = '65%';
+	}
+	header.style.display = 'none';
+	list.style.display = 'none';
+	info.style.height = '170px';
+	var listItems = book.getElementsByClassName('webix_list_item');
+	for (i=0; i<listItems.length; i++) {
+		listItems[i].classList.add('custom');
+	}
+	book.childNodes[0].style.height = 'auto';
+
+	$$('sudinfo').adjust();
+	$$('phonebook').adjust();
+	window.print();
+}
+
+function tst() {
+	webix.print($$('phonebook'));
+}
+</script>
 </body>
 </html>
